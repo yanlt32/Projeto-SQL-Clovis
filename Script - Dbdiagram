@@ -1,0 +1,140 @@
+Enum "status_aluno" {
+  ativo
+  inativo
+  trancado
+}
+
+Enum "status_matricula" {
+  ativa
+  cancelada
+  concluida
+}
+
+Enum "tipo_vinculo" {
+  titular
+  auxiliar
+  convidado
+}
+
+Enum "status_pagamento" {
+  pendente
+  pago
+  atrasado
+}
+
+Enum "forma_pagamento" {
+  dinheiro
+  cartao
+  boleto
+  pix
+}
+
+Table tb_pessoas {
+  pk_pessoa int [pk, increment]
+  nome_pessoa varchar(100) [not null]
+  data_nascimento date [not null]
+  cpf char(11) [not null, unique]
+  email varchar(100) [not null, unique]
+  telefone varchar(15)
+  endereco varchar(200)
+  created_at timestamp [default: `current_timestamp`]
+}
+
+Table tb_cursos {
+  pk_curso int [pk, increment]
+  nome_curso varchar(100) [not null, unique]
+  duracao_semestres tinyint [not null]
+  created_at timestamp [default: `current_timestamp`]
+}
+
+Table tb_disciplinas {
+  pk_disciplina int [pk, increment]
+  nome_disciplina varchar(60) [not null]
+  carga_horaria tinyint [not null]
+  fk_curso int [not null, ref: > tb_cursos.pk_curso]
+}
+
+Table tb_alunos {
+  pk_aluno int [pk, increment]
+  fk_pessoa int [not null, unique, ref: > tb_pessoas.pk_pessoa]
+  ra char(10) [not null, unique]
+  status_aluno status_aluno [default: "ativo"]
+  data_ingresso date [not null]
+  created_at timestamp [default: `current_timestamp`]
+}
+
+Table tb_professores {
+  pk_professor int [pk, increment]
+  fk_pessoa int [not null, unique, ref: > tb_pessoas.pk_pessoa]
+  registro_professor char(10) [not null, unique]
+  formacao varchar(100)
+  data_contratacao date [not null]
+  created_at timestamp [default: `current_timestamp`]
+}
+
+Table tb_matriculas {
+  fk_aluno int [not null, ref: > tb_alunos.pk_aluno]
+  fk_disciplina int [not null, ref: > tb_disciplinas.pk_disciplina]
+  data_matricula date [not null]
+  status_matricula status_matricula [default: "ativa"]
+  created_at timestamp [default: `current_timestamp`]
+  
+  indexes {
+    (fk_aluno, fk_disciplina) [pk]
+  }
+}
+
+Table tb_notas {
+  pk_nota int [pk, increment]
+  qtde_faltas tinyint [not null, default: 0]
+  fk_aluno int [not null]
+  fk_disciplina int [not null]
+  nota_final decimal(4,2)
+  
+  indexes {
+    (fk_aluno, fk_disciplina) [unique]
+  }
+}
+
+Table tb_vinculos_professor_disciplina {
+  fk_professor int [not null, ref: > tb_professores.pk_professor]
+  fk_disciplina int [not null, ref: > tb_disciplinas.pk_disciplina]
+  data_vinculo date [not null]
+  carga_horaria tinyint [not null]
+  tipo_vinculo tipo_vinculo [default: "titular"]
+  
+  indexes {
+    (fk_professor, fk_disciplina) [pk]
+  }
+}
+
+Table tb_contratos_educacionais {
+  pk_contrato int [pk, increment]
+  fk_aluno int [not null, ref: > tb_alunos.pk_aluno]
+  data_inicio date [not null]
+  data_fim date
+  valor_mensalidade decimal(10,2) [not null]
+  created_at timestamp [default: `current_timestamp`]
+}
+
+Table tb_mensalidades {
+  pk_mensalidade int [pk, increment]
+  fk_contrato int [not null, ref: > tb_contratos_educacionais.pk_contrato]
+  competencia date [not null]
+  data_vencimento date [not null]
+  valor decimal(10,2) [not null]
+  status_pagamento status_pagamento [default: "pendente"]
+  
+  indexes {
+    (fk_contrato, competencia) [unique]
+  }
+}
+
+Table tb_pagamentos {
+  pk_pagamento int [pk, increment]
+  fk_mensalidade int [not null, ref: > tb_mensalidades.pk_mensalidade]
+  data_pagamento date [not null]
+  valor_pago decimal(10,2) [not null]
+  forma_pagamento forma_pagamento [default: "boleto"]
+  created_at timestamp [default: `current_timestamp`]
+}
