@@ -1,4 +1,5 @@
-<img width="2644" height="1098" alt="Untitled" src="https://github.com/user-attachments/assets/9bddf992-8a76-4c4e-b6f9-b0027c8e72ee" />
+<img width="2644" height="1098" alt="Untitled (1)" src="https://github.com/user-attachments/assets/69f89fbb-4ce2-4964-8dea-b061bc1c15c7" />
+
 
 link do DER: https://dbdiagram.io/d/69daa4678089629684740b7c
 
