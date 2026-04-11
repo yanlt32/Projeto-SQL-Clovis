@@ -1,4 +1,5 @@
-Aqui está um README profissional para o seu diagrama do SISGESC (ERP Educacional):
+<img width="2644" height="1098" alt="Untitled" src="https://github.com/user-attachments/assets/9bddf992-8a76-4c4e-b6f9-b0027c8e72ee" />
+
 
 
 ---
