@@ -9,6 +9,17 @@
 
 ---
 
+## 🔗 Links Rápidos
+
+| Recurso | Link |
+|---------|------|
+| 🌐 **Interface Web do Sistema** | [tables-sql.vercel.app](https://tables-sql.vercel.app/) |
+| 📚 **Documentação Completa (Notion)** | [DOCUMENTAÇÃO COMPLETA DO PROJETO SISGESC](https://www.notion.so/DOCUMENTA-O-COMPLETA-DO-PROJETO-SISGESC-e518a24745ec47088054301d173ff5e8) |
+| 🗺️ **Diagrama DER** | [dbdiagram.io/d/69daa4678089629684740b7c](https://dbdiagram.io/d/69daa4678089629684740b7c) |
+| 📁 **Repositório GitHub** | [github.com/seu-usuario/sisgesc](https://github.com/seu-usuario/sisgesc) |
+
+---
+
 ## 📌 Visão Geral
 
 O **SISGESC** é um sistema de gestão educacional (ERP) projetado para controlar informações acadêmicas e financeiras de uma instituição de ensino. O banco de dados foi estruturado com foco em **normalização**, **integridade referencial** e **escalabilidade**, atendendo tanto operações do dia a dia (OLTP) quanto análises gerenciais (OLAP).
@@ -21,6 +32,39 @@ O **SISGESC** é um sistema de gestão educacional (ERP) projetado para controla
 - ✅ Administrar contratos educacionais e mensalidades
 - ✅ Processar pagamentos e controle de inadimplência
 - ✅ Fornecer dados para análise com Star Schema (OLAP)
+
+---
+
+## 🌐 Interface Web do Projeto
+
+O projeto conta com uma **interface web interativa** disponível no link abaixo:
+
+🔗 **[Acesse a Interface Web do SisGESC](https://tables-sql.vercel.app/)**
+
+Esta interface foi desenvolvida para demonstrar, de forma visual e organizada, todas as fases de implementação do banco de dados:
+
+| Fase | Conteúdo Demonstrado |
+| :--- | :--- |
+| **1. DDL (Estrutura)** | Listagem de todos os módulos (Acadêmico, RH, Financeiro, OLAP) e tabela detalhada com PKs, FKs e constraints |
+| **2. Carga de Dados** | Exibição de **todos os registros** inseridos nas tabelas principais, comprovando a idempotência |
+| **3. OLTP (Operações)** | SELECTs, Subselects e **Transações ACID** (ROLLBACK/COMMIT) com resultados reais |
+| **4. OLAP + ETL** | Star Schema, processo ETL detalhado (Extract, Transform, Load) e validação OLTP = OLAP |
+| **5. Performance** | Lista de índices criados e aplicação do EXPLAIN |
+| **6. Governança** | Padrões adotados (snake_case), script de reset e versionamento Git |
+
+---
+
+## 📚 Documentação Completa
+
+A documentação completa do projeto está disponível no Notion, contendo:
+
+- 📖 **Toda a documentação do código SQL** (Fases 1 a 6)
+- 📊 **Explicação detalhada do ETL** (Extract, Transform, Load)
+- 🔄 **Demonstração das transações** (ROLLBACK e COMMIT)
+- ✅ **Validações e resultados** (OLTP vs OLAP)
+- 📝 **Checklist de qualidade e pontuação final**
+
+🔗 **[Acesse a Documentação Completa no Notion](https://www.notion.so/DOCUMENTA-O-COMPLETA-DO-PROJETO-SISGESC-e518a24745ec47088054301d173ff5e8)**
 
 ---
 
