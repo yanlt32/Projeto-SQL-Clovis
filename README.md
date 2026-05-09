@@ -16,7 +16,7 @@
 | 🌐 **Interface Web do Sistema** | [tables-sql.vercel.app](https://tables-sql.vercel.app/) |
 | 📚 **Documentação Completa (Notion)** | [DOCUMENTAÇÃO COMPLETA DO PROJETO SISGESC](https://www.notion.so/DOCUMENTA-O-COMPLETA-DO-PROJETO-SISGESC-e518a24745ec47088054301d173ff5e8) |
 | 🗺️ **Diagrama DER** | [dbdiagram.io/d/69daa4678089629684740b7c](https://dbdiagram.io/d/69daa4678089629684740b7c) |
-| 📁 **Repositório GitHub** | [github.com/seu-usuario/sisgesc](https://github.com/seu-usuario/sisgesc) |
+
 
 ---
 
