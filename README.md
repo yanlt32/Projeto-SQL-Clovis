@@ -15,7 +15,7 @@
 |---------|------|
 | 🌐 **Interface Web do Sistema** | [tables-sql.vercel.app](https://tables-sql.vercel.app/) |
 | 📚 **Documentação Completa (Notion)** | [DOCUMENTAÇÃO COMPLETA DO PROJETO SISGESC](https://www.notion.so/DOCUMENTA-O-COMPLETA-DO-PROJETO-SISGESC-e518a24745ec47088054301d173ff5e8) |
-| 🗺️ **Diagrama DER** | [dbdiagram.io/d/69daa4678089629684740b7c](https://dbdiagram.io/d/69daa4678089629684740b7c) |
+| 🗺️ **Diagrama DER** | [dbdiagram.io/d/DER-69ffc6f77a923b947267d9b4](https://dbdiagram.io/d/DER-69ffc6f77a923b947267d9b4) |
 
 
 ---
@@ -113,7 +113,7 @@ O banco é dividido em **módulos organizacionais** para facilitar manutenção 
 
 ![DER - SISGESC](https://github.com/user-attachments/assets/69f89fbb-4ce2-4964-8dea-b061bc1c15c7)
 
-🔗 **Link interativo:** [Visualizar DER no dbdiagram.io](https://dbdiagram.io/d/69daa4678089629684740b7c)
+🔗 **Link interativo:** [Visualizar DER no dbdiagram.io](https://dbdiagram.io/d/DER-69ffc6f77a923b947267d9b4)
 
 ---
 
