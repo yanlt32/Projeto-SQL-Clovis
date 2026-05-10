@@ -111,7 +111,7 @@ O banco é dividido em **módulos organizacionais** para facilitar manutenção 
 
 ## 🔗 Diagrama Entidade-Relacionamento (DER)
 
-![DER - SISGESC](https://github.com/user-attachments/assets/69f89fbb-4ce2-4964-8dea-b061bc1c15c7)
+![DER - SISGESC](https://github.com/yanlt32/Projeto-SQL-Clovis/blob/ccd4ebe04b0949fae0ab015a7745f72e6da9b076/DER.png)
 
 🔗 **Link interativo:** [Visualizar DER no dbdiagram.io](https://dbdiagram.io/d/DER-69ffc6f77a923b947267d9b4)
 
