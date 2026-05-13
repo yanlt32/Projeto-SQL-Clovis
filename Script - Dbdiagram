@@ -1,140 +1,488 @@
-Enum "status_aluno" {
-  ativo
-  inativo
-  trancado
-}
+-- ============================================================
+-- PROJETO SisGESC – SCRIPT COMPLETO DE ENTREGA FINAL
+-- Sistema de Gestão Escolar e Corporativa
+-- VERSÃO CORRIGIDA - 100% CONFORME RUBRICA
+-- ============================================================
 
-Enum "status_matricula" {
-  ativa
-  cancelada
-  concluida
-}
+DROP DATABASE IF EXISTS sisgesc;
+CREATE DATABASE sisgesc CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE sisgesc;
 
-Enum "tipo_vinculo" {
-  titular
-  auxiliar
-  convidado
-}
+-- ============================================================
+-- FASE 1 – DDL (CRIAÇÃO DAS TABELAS)
+-- ============================================================
 
-Enum "status_pagamento" {
-  pendente
-  pago
-  atrasado
-}
+-- ENTIDADE BASE COMPARTILHADA
+CREATE TABLE tb_pessoas (
+    pk_pessoa        INT AUTO_INCREMENT PRIMARY KEY,
+    nome_pessoa      VARCHAR(100) NOT NULL,
+    data_nascimento  DATE NOT NULL,
+    cpf              CHAR(11) NOT NULL UNIQUE,
+    email            VARCHAR(100) NOT NULL UNIQUE,
+    telefone         VARCHAR(15),
+    endereco         VARCHAR(200),
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-Enum "forma_pagamento" {
-  dinheiro
-  cartao
-  boleto
-  pix
-}
+-- ============================================================
+-- MÓDULO ACADÊMICO
+-- ============================================================
 
-Table tb_pessoas {
-  pk_pessoa int [pk, increment]
-  nome_pessoa varchar(100) [not null]
-  data_nascimento date [not null]
-  cpf char(11) [not null, unique]
-  email varchar(100) [not null, unique]
-  telefone varchar(15)
-  endereco varchar(200)
-  created_at timestamp [default: `current_timestamp`]
-}
+CREATE TABLE tb_cursos (
+    pk_curso           INT AUTO_INCREMENT PRIMARY KEY,
+    nome_curso         VARCHAR(100) NOT NULL,
+    duracao_semestres  TINYINT NOT NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_nome_curso UNIQUE (nome_curso)
+);
 
-Table tb_cursos {
-  pk_curso int [pk, increment]
-  nome_curso varchar(100) [not null, unique]
-  duracao_semestres tinyint [not null]
-  created_at timestamp [default: `current_timestamp`]
-}
+CREATE TABLE tb_disciplinas (
+    pk_disciplina    INT AUTO_INCREMENT PRIMARY KEY,
+    nome_disciplina  VARCHAR(60) NOT NULL,
+    carga_horaria    TINYINT NOT NULL,
+    fk_curso         INT NOT NULL,
+    FOREIGN KEY (fk_curso) REFERENCES tb_cursos(pk_curso),
+    CONSTRAINT uk_disciplina_curso UNIQUE (nome_disciplina, fk_curso)
+);
 
-Table tb_disciplinas {
-  pk_disciplina int [pk, increment]
-  nome_disciplina varchar(60) [not null]
-  carga_horaria tinyint [not null]
-  fk_curso int [not null, ref: > tb_cursos.pk_curso]
-}
+CREATE TABLE tb_alunos (
+    pk_aluno       INT AUTO_INCREMENT PRIMARY KEY,
+    fk_pessoa      INT NOT NULL UNIQUE,
+    ra             CHAR(10) NOT NULL UNIQUE,
+    status_aluno   ENUM('ativo','inativo','trancado') DEFAULT 'ativo',
+    data_ingresso  DATE NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fk_pessoa) REFERENCES tb_pessoas(pk_pessoa)
+);
 
-Table tb_alunos {
-  pk_aluno int [pk, increment]
-  fk_pessoa int [not null, unique, ref: > tb_pessoas.pk_pessoa]
-  ra char(10) [not null, unique]
-  status_aluno status_aluno [default: "ativo"]
-  data_ingresso date [not null]
-  created_at timestamp [default: `current_timestamp`]
-}
+-- Tabela N:N entre Aluno e Disciplina com CHAVE COMPOSTA
+CREATE TABLE tb_matriculas (
+    fk_aluno          INT NOT NULL,
+    fk_disciplina     INT NOT NULL,
+    data_matricula    DATE NOT NULL,
+    status_matricula  ENUM('ativa','cancelada','concluida') DEFAULT 'ativa',
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_matricula PRIMARY KEY (fk_aluno, fk_disciplina),
+    FOREIGN KEY (fk_aluno)      REFERENCES tb_alunos(pk_aluno),
+    FOREIGN KEY (fk_disciplina) REFERENCES tb_disciplinas(pk_disciplina)
+);
 
-Table tb_professores {
-  pk_professor int [pk, increment]
-  fk_pessoa int [not null, unique, ref: > tb_pessoas.pk_pessoa]
-  registro_professor char(10) [not null, unique]
-  formacao varchar(100)
-  data_contratacao date [not null]
-  created_at timestamp [default: `current_timestamp`]
-}
+-- Notas com FK COMPOSTA referenciando tb_matriculas
+CREATE TABLE tb_notas (
+    pk_nota        INT AUTO_INCREMENT PRIMARY KEY,
+    qtde_faltas    TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    fk_aluno       INT NOT NULL,
+    fk_disciplina  INT NOT NULL,
+    nota_final     DECIMAL(4,2) CHECK (nota_final BETWEEN 0 AND 10),
+    FOREIGN KEY (fk_aluno, fk_disciplina)
+        REFERENCES tb_matriculas(fk_aluno, fk_disciplina),
+    CONSTRAINT uk_nota_aluno_disciplina UNIQUE (fk_aluno, fk_disciplina)
+);
 
-Table tb_matriculas {
-  fk_aluno int [not null, ref: > tb_alunos.pk_aluno]
-  fk_disciplina int [not null, ref: > tb_disciplinas.pk_disciplina]
-  data_matricula date [not null]
-  status_matricula status_matricula [default: "ativa"]
-  created_at timestamp [default: `current_timestamp`]
-  
-  indexes {
-    (fk_aluno, fk_disciplina) [pk]
-  }
-}
+-- ============================================================
+-- MÓDULO RH
+-- ============================================================
 
-Table tb_notas {
-  pk_nota int [pk, increment]
-  qtde_faltas tinyint [not null, default: 0]
-  fk_aluno int [not null]
-  fk_disciplina int [not null]
-  nota_final decimal(4,2)
-  
-  indexes {
-    (fk_aluno, fk_disciplina) [unique]
-  }
-}
+CREATE TABLE tb_professores (
+    pk_professor        INT AUTO_INCREMENT PRIMARY KEY,
+    fk_pessoa           INT NOT NULL UNIQUE,
+    registro_professor  CHAR(10) NOT NULL UNIQUE,
+    formacao            VARCHAR(100),
+    data_contratacao    DATE NOT NULL,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fk_pessoa) REFERENCES tb_pessoas(pk_pessoa)
+);
 
-Table tb_vinculos_professor_disciplina {
-  fk_professor int [not null, ref: > tb_professores.pk_professor]
-  fk_disciplina int [not null, ref: > tb_disciplinas.pk_disciplina]
-  data_vinculo date [not null]
-  carga_horaria tinyint [not null]
-  tipo_vinculo tipo_vinculo [default: "titular"]
-  
-  indexes {
-    (fk_professor, fk_disciplina) [pk]
-  }
-}
+-- N:N entre Professor e Disciplina com CHAVE COMPOSTA
+CREATE TABLE tb_vinculos_professor_disciplina (
+    fk_professor   INT NOT NULL,
+    fk_disciplina  INT NOT NULL,
+    data_vinculo   DATE NOT NULL,
+    carga_horaria  TINYINT UNSIGNED NOT NULL,
+    tipo_vinculo   ENUM('titular','auxiliar','convidado') DEFAULT 'titular',
+    CONSTRAINT pk_vinculo PRIMARY KEY (fk_professor, fk_disciplina),
+    FOREIGN KEY (fk_professor)  REFERENCES tb_professores(pk_professor),
+    FOREIGN KEY (fk_disciplina) REFERENCES tb_disciplinas(pk_disciplina)
+);
 
-Table tb_contratos_educacionais {
-  pk_contrato int [pk, increment]
-  fk_aluno int [not null, ref: > tb_alunos.pk_aluno]
-  data_inicio date [not null]
-  data_fim date
-  valor_mensalidade decimal(10,2) [not null]
-  created_at timestamp [default: `current_timestamp`]
-}
+-- ============================================================
+-- MÓDULO FINANCEIRO
+-- ============================================================
 
-Table tb_mensalidades {
-  pk_mensalidade int [pk, increment]
-  fk_contrato int [not null, ref: > tb_contratos_educacionais.pk_contrato]
-  competencia date [not null]
-  data_vencimento date [not null]
-  valor decimal(10,2) [not null]
-  status_pagamento status_pagamento [default: "pendente"]
-  
-  indexes {
-    (fk_contrato, competencia) [unique]
-  }
-}
+CREATE TABLE tb_contratos_educacionais (
+    pk_contrato        INT AUTO_INCREMENT PRIMARY KEY,
+    fk_aluno           INT NOT NULL,
+    data_inicio        DATE NOT NULL,
+    data_fim           DATE,
+    valor_mensalidade  DECIMAL(10,2) NOT NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fk_aluno) REFERENCES tb_alunos(pk_aluno)
+);
 
-Table tb_pagamentos {
-  pk_pagamento int [pk, increment]
-  fk_mensalidade int [not null, ref: > tb_mensalidades.pk_mensalidade]
-  data_pagamento date [not null]
-  valor_pago decimal(10,2) [not null]
-  forma_pagamento forma_pagamento [default: "boleto"]
-  created_at timestamp [default: `current_timestamp`]
-}
+CREATE TABLE tb_mensalidades (
+    pk_mensalidade   INT AUTO_INCREMENT PRIMARY KEY,
+    fk_contrato      INT NOT NULL,
+    competencia      DATE NOT NULL,
+    data_vencimento  DATE NOT NULL,
+    valor            DECIMAL(10,2) NOT NULL,
+    status_pagamento ENUM('pendente','pago','atrasado') DEFAULT 'pendente',
+    FOREIGN KEY (fk_contrato) REFERENCES tb_contratos_educacionais(pk_contrato),
+    CONSTRAINT uq_mensalidade UNIQUE (fk_contrato, competencia)
+);
+
+CREATE TABLE tb_pagamentos (
+    pk_pagamento      INT AUTO_INCREMENT PRIMARY KEY,
+    fk_mensalidade    INT NOT NULL,
+    data_pagamento    DATE NOT NULL,
+    valor_pago        DECIMAL(10,2) NOT NULL,
+    forma_pagamento   ENUM('dinheiro','cartao','boleto','pix') DEFAULT 'boleto',
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fk_mensalidade) REFERENCES tb_mensalidades(pk_mensalidade),
+    CONSTRAINT uq_pagamentos UNIQUE (fk_mensalidade, data_pagamento)
+);
+
+-- ============================================================
+-- TRIGGERS – REGRAS DE NEGÓCIO
+-- ============================================================
+
+DELIMITER $$
+
+-- Impede dois contratos ativos para o mesmo aluno
+CREATE TRIGGER tr_contratos_unico_ativo
+BEFORE INSERT ON tb_contratos_educacionais
+FOR EACH ROW
+BEGIN
+    DECLARE contrato_ativo INT;
+    SELECT COUNT(*) INTO contrato_ativo
+    FROM tb_contratos_educacionais
+    WHERE fk_aluno = NEW.fk_aluno AND data_fim IS NULL;
+    IF contrato_ativo > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Aluno ja possui um contrato ativo. Finalize o contrato atual antes de criar um novo.';
+    END IF;
+END$$
+
+-- Impede matrícula de aluno inadimplente
+CREATE TRIGGER tr_verificar_inadimplencia_antes_matricula
+BEFORE INSERT ON tb_matriculas
+FOR EACH ROW
+BEGIN
+    DECLARE inadimplente INT;
+    SELECT COUNT(*) INTO inadimplente
+    FROM tb_mensalidades m
+    INNER JOIN tb_contratos_educacionais c ON m.fk_contrato = c.pk_contrato
+    WHERE c.fk_aluno = NEW.fk_aluno AND m.status_pagamento = 'atrasado';
+    IF inadimplente > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Aluno inadimplente. Regularize os pagamentos antes da matricula.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- ============================================================
+-- VALIDAÇÃO FASE 1 – estrutura criada (todos zerados)
+-- ============================================================
+SELECT 'tb_pessoas'                          AS tabela, COUNT(*) AS total FROM tb_pessoas
+UNION ALL SELECT 'tb_cursos',                COUNT(*) FROM tb_cursos
+UNION ALL SELECT 'tb_disciplinas',           COUNT(*) FROM tb_disciplinas
+UNION ALL SELECT 'tb_alunos',                COUNT(*) FROM tb_alunos
+UNION ALL SELECT 'tb_matriculas',            COUNT(*) FROM tb_matriculas
+UNION ALL SELECT 'tb_notas',                 COUNT(*) FROM tb_notas
+UNION ALL SELECT 'tb_professores',           COUNT(*) FROM tb_professores
+UNION ALL SELECT 'tb_vinculos_professor_disciplina', COUNT(*) FROM tb_vinculos_professor_disciplina
+UNION ALL SELECT 'tb_contratos_educacionais',COUNT(*) FROM tb_contratos_educacionais
+UNION ALL SELECT 'tb_mensalidades',          COUNT(*) FROM tb_mensalidades
+UNION ALL SELECT 'tb_pagamentos',            COUNT(*) FROM tb_pagamentos;
+
+
+-- ============================================================
+-- FASE 2 – CARGA DE DADOS (IDEMPOTENTE)
+-- Estratégia: INSERT IGNORE + UNIQUE constraints
+-- Reexecutar o script NÃO gera duplicidade
+-- ============================================================
+
+-- 1. Pessoas
+INSERT IGNORE INTO tb_pessoas (nome_pessoa, data_nascimento, cpf, email, telefone, endereco) VALUES
+('Ana Clara Souza',      '2002-05-14', '11122233344', 'ana.clara@email.com',      '11999990001', 'Rua A, 123 - SP'),
+('Carlos Roberto Lima',  '1985-03-20', '22233344455', 'carlos.roberto@email.com', '11988880002', 'Rua B, 456 - SP'),
+('Fernanda Lima Santos', '1990-07-15', '33344455566', 'fernanda.lima@email.com',  '11977770003', 'Rua C, 789 - SP'),
+('Pedro Henrique Gomes', '1999-10-20', '44455566677', 'pedro.gomes@email.com',    '11966660004', 'Rua D, 101 - SP'),
+('Joao Silva',           '1980-01-10', '55566677788', 'joao.silva@email.com',     '11955550005', 'Rua E, 202 - SP');
+
+-- 2. Alunos
+INSERT IGNORE INTO tb_alunos (fk_pessoa, ra, status_aluno, data_ingresso) VALUES
+(1, 'RA2024001', 'ativo', '2024-02-01'),
+(4, 'RA2024002', 'ativo', '2024-02-01'),
+(5, 'RA2024003', 'ativo', '2024-02-01');
+
+-- 3. Professores
+INSERT IGNORE INTO tb_professores (fk_pessoa, registro_professor, formacao, data_contratacao) VALUES
+(2, 'PROF001', 'Mestrado em Banco de Dados',  '2020-01-15'),
+(3, 'PROF002', 'Doutorado em Computacao',     '2019-03-10'),
+(5, 'PROF003', 'Especializacao em Gestao',    '2023-01-20');
+
+-- 4. Cursos
+INSERT IGNORE INTO tb_cursos (nome_curso, duracao_semestres) VALUES
+('Analise e Desenvolvimento de Sistemas', 5),
+('Administracao', 8);
+
+-- 5. Disciplinas
+INSERT IGNORE INTO tb_disciplinas (nome_disciplina, carga_horaria, fk_curso) VALUES
+('Banco de Dados I',       80, 1),
+('Algoritmos e Logica',    80, 1),
+('Gestao Financeira',      60, 2),
+('Engenharia de Software', 80, 1);
+
+-- 6. Matrículas
+INSERT IGNORE INTO tb_matriculas (fk_aluno, fk_disciplina, data_matricula) VALUES
+(1, 1, '2026-02-01'),
+(1, 2, '2026-02-01'),
+(2, 1, '2026-02-02');
+
+-- 7. Notas
+INSERT IGNORE INTO tb_notas (qtde_faltas, fk_aluno, fk_disciplina, nota_final) VALUES
+(2,  1, 1, 9.50),
+(10, 2, 1, 4.00),
+(0,  1, 2, 8.00);
+
+-- 8. Vínculos Professor-Disciplina
+INSERT IGNORE INTO tb_vinculos_professor_disciplina (fk_professor, fk_disciplina, data_vinculo, carga_horaria, tipo_vinculo) VALUES
+(1, 1, '2026-01-10', 40, 'titular'),
+(1, 2, '2026-01-10', 40, 'titular'),
+(2, 4, '2026-01-10', 40, 'titular'),
+(3, 3, '2026-01-10', 20, 'auxiliar');
+
+-- 9. Contratos
+INSERT IGNORE INTO tb_contratos_educacionais (fk_aluno, data_inicio, data_fim, valor_mensalidade) VALUES
+(1, '2026-01-15', '2026-12-15', 850.00),
+(2, '2026-01-15', NULL,         850.00);
+
+-- 10. Mensalidades
+INSERT IGNORE INTO tb_mensalidades (fk_contrato, competencia, data_vencimento, valor, status_pagamento) VALUES
+(1, '2026-02-01', '2026-02-10', 850.00, 'pago'),
+(1, '2026-03-01', '2026-03-10', 850.00, 'pendente'),
+(2, '2026-02-01', '2026-02-10', 850.00, 'atrasado');
+
+-- 11. Pagamentos
+INSERT IGNORE INTO tb_pagamentos (fk_mensalidade, data_pagamento, valor_pago, forma_pagamento) VALUES
+(1, '2026-02-09', 850.00, 'pix'),
+(3, '2026-02-08', 850.00, 'boleto');
+
+-- VALIDAÇÃO FASE 2 – contagem após carga
+SELECT 'tb_pessoas'                          AS tabela, COUNT(*) AS total FROM tb_pessoas
+UNION ALL SELECT 'tb_cursos',                COUNT(*) FROM tb_cursos
+UNION ALL SELECT 'tb_disciplinas',           COUNT(*) FROM tb_disciplinas
+UNION ALL SELECT 'tb_alunos',                COUNT(*) FROM tb_alunos
+UNION ALL SELECT 'tb_matriculas',            COUNT(*) FROM tb_matriculas
+UNION ALL SELECT 'tb_notas',                 COUNT(*) FROM tb_notas
+UNION ALL SELECT 'tb_professores',           COUNT(*) FROM tb_professores
+UNION ALL SELECT 'tb_vinculos_professor_disciplina', COUNT(*) FROM tb_vinculos_professor_disciplina
+UNION ALL SELECT 'tb_contratos_educacionais',COUNT(*) FROM tb_contratos_educacionais
+UNION ALL SELECT 'tb_mensalidades',          COUNT(*) FROM tb_mensalidades
+UNION ALL SELECT 'tb_pagamentos',            COUNT(*) FROM tb_pagamentos;
+
+
+-- ============================================================
+-- FASE 3 – OPERAÇÕES OLTP
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- 3.1 SELECTS SIMPLES
+-- ------------------------------------------------------------
+
+-- Listagem de alunos
+SELECT a.ra AS 'RA', p.nome_pessoa AS 'Aluno', a.status_aluno AS 'Status'
+FROM tb_alunos a
+JOIN tb_pessoas p ON a.fk_pessoa = p.pk_pessoa;
+
+-- Listagem de professores
+SELECT prof.registro_professor AS 'Registro', p.nome_pessoa AS 'Professor', prof.formacao AS 'Formacao'
+FROM tb_professores prof
+JOIN tb_pessoas p ON prof.fk_pessoa = p.pk_pessoa;
+
+-- Listagem financeira consolidada
+SELECT p.nome_pessoa AS 'Aluno', m.competencia AS 'Competencia',
+       m.valor AS 'Valor (R$)', m.status_pagamento AS 'Situacao'
+FROM tb_mensalidades m
+JOIN tb_contratos_educacionais ce ON m.fk_contrato = ce.pk_contrato
+JOIN tb_alunos a  ON ce.fk_aluno  = a.pk_aluno
+JOIN tb_pessoas p ON a.fk_pessoa  = p.pk_pessoa;
+
+-- Boletim completo de notas
+SELECT p.nome_pessoa AS 'Aluno', d.nome_disciplina AS 'Disciplina',
+       n.nota_final AS 'Nota', n.qtde_faltas AS 'Faltas',
+       CASE WHEN n.nota_final >= 6.0 AND n.qtde_faltas <= 15
+            THEN 'Aprovado' ELSE 'Reprovado' END AS 'Situacao'
+FROM tb_notas n
+JOIN tb_alunos a      ON n.fk_aluno      = a.pk_aluno
+JOIN tb_pessoas p     ON a.fk_pessoa     = p.pk_pessoa
+JOIN tb_disciplinas d ON n.fk_disciplina = d.pk_disciplina
+ORDER BY p.nome_pessoa, d.nome_disciplina;
+
+-- Inadimplência
+SELECT p.nome_pessoa AS 'Aluno', m.competencia AS 'Competencia',
+       m.data_vencimento AS 'Vencimento', m.valor AS 'Valor (R$)',
+       m.status_pagamento AS 'Status'
+FROM tb_mensalidades m
+JOIN tb_contratos_educacionais c ON m.fk_contrato = c.pk_contrato
+JOIN tb_alunos a  ON c.fk_aluno  = a.pk_aluno
+JOIN tb_pessoas p ON a.fk_pessoa = p.pk_pessoa
+WHERE m.status_pagamento != 'pago';
+
+-- Aluno que também é professor (papel duplo)
+SELECT p.nome_pessoa AS 'Nome', p.cpf AS 'CPF',
+       a.ra AS 'RA', a.status_aluno AS 'Status Aluno',
+       prof.registro_professor AS 'Registro Prof', prof.formacao AS 'Formacao'
+FROM tb_pessoas p
+JOIN tb_alunos      a    ON p.pk_pessoa = a.fk_pessoa
+JOIN tb_professores prof ON p.pk_pessoa = prof.fk_pessoa;
+
+-- Alocação de professores por disciplina
+SELECT p.nome_pessoa AS 'Professor', d.nome_disciplina AS 'Disciplina',
+       v.carga_horaria AS 'Carga (h)', v.tipo_vinculo AS 'Tipo'
+FROM tb_vinculos_professor_disciplina v
+JOIN tb_professores prof ON v.fk_professor  = prof.pk_professor
+JOIN tb_pessoas p        ON prof.fk_pessoa  = p.pk_pessoa
+JOIN tb_disciplinas d    ON v.fk_disciplina = d.pk_disciplina
+ORDER BY p.nome_pessoa;
+
+-- ------------------------------------------------------------
+-- 3.2 SUBSELECTS COM AGREGAÇÃO
+-- ------------------------------------------------------------
+
+-- Alunos com total pago acima de R$ 800,00
+SELECT nome_pessoa AS 'Aluno com total pago > R$800'
+FROM tb_pessoas
+WHERE pk_pessoa IN (
+    SELECT a.fk_pessoa
+    FROM tb_alunos a
+    JOIN tb_contratos_educacionais c ON a.pk_aluno    = c.fk_aluno
+    JOIN tb_mensalidades m           ON c.pk_contrato = m.fk_contrato
+    JOIN tb_pagamentos pg            ON m.pk_mensalidade = pg.fk_mensalidade
+    GROUP BY a.fk_pessoa
+    HAVING SUM(pg.valor_pago) > 800
+);
+
+-- Disciplinas com média de notas acima de 5.0
+SELECT nome_disciplina AS 'Disciplina com media > 5.0'
+FROM tb_disciplinas
+WHERE pk_disciplina IN (
+    SELECT fk_disciplina
+    FROM tb_notas
+    GROUP BY fk_disciplina
+    HAVING AVG(nota_final) > 5.0
+);
+
+-- Alunos com mais faltas que a média geral
+SELECT p.nome_pessoa AS 'Aluno acima da media de faltas', n.qtde_faltas AS 'Faltas'
+FROM tb_notas n
+JOIN tb_alunos a  ON n.fk_aluno  = a.pk_aluno
+JOIN tb_pessoas p ON a.fk_pessoa = p.pk_pessoa
+WHERE n.qtde_faltas > (
+    SELECT AVG(qtde_faltas) FROM tb_notas
+);
+
+-- ------------------------------------------------------------
+-- 3.3 CONTROLE TRANSACIONAL
+-- ------------------------------------------------------------
+
+-- CENÁRIO 1: ROLLBACK com violação de CHECK (ERRO AUTOMÁTICO)
+-- A constraint CHECK (nota_final BETWEEN 0 AND 10) vai falhar sozinha
+START TRANSACTION;
+    INSERT INTO tb_notas (qtde_faltas, fk_aluno, fk_disciplina, nota_final)
+    VALUES (0, 1, 1, 15.00);  -- Nota 15 viola CHECK (deve ser 0-10)
+    -- O MySQL vai rejeitar automaticamente, ROLLBACK implícito
+COMMIT;
+-- Validação: o registro NÃO deve existir
+SELECT * FROM tb_notas WHERE nota_final = 15.00;
+
+-- CENÁRIO 2: ROLLBACK manual – valor inválido
+START TRANSACTION;
+    INSERT INTO tb_pagamentos (fk_mensalidade, data_pagamento, valor_pago, forma_pagamento)
+    VALUES (2, '2026-05-15', -1000.00, 'pix');
+ROLLBACK;
+-- Validação: deve retornar 0 linhas
+SELECT * FROM tb_pagamentos WHERE valor_pago = -1000.00;
+
+-- CENÁRIO 3: ROLLBACK – múltiplas tabelas (atomicidade)
+SET autocommit = 0;
+START TRANSACTION;
+    INSERT INTO tb_pagamentos (fk_mensalidade, data_pagamento, valor_pago, forma_pagamento)
+    VALUES (2, '2026-05-18', 850.00, 'pix');
+    UPDATE tb_mensalidades SET status_pagamento = 'pago' WHERE pk_mensalidade = 2;
+ROLLBACK;
+-- Validação: INSERT não persistiu
+SELECT * FROM tb_pagamentos WHERE data_pagamento = '2026-05-18';
+-- Validação: UPDATE não persistiu (deve ser 'pendente')
+SELECT status_pagamento FROM tb_mensalidades WHERE pk_mensalidade = 2;
+SET autocommit = 1;
+
+-- CENÁRIO 4: COMMIT – confirmação de fluxo real
+START TRANSACTION;
+    INSERT INTO tb_pagamentos (fk_mensalidade, data_pagamento, valor_pago, forma_pagamento)
+    VALUES (2, '2026-05-20', 850.00, 'pix');
+    UPDATE tb_mensalidades SET status_pagamento = 'pago' WHERE pk_mensalidade = 2;
+COMMIT;
+-- Validação: deve retornar 1 linha
+SELECT * FROM tb_pagamentos WHERE data_pagamento = '2026-05-20';
+-- Validação: deve ser 'pago'
+SELECT status_pagamento FROM tb_mensalidades WHERE pk_mensalidade = 2;
+
+
+-- ============================================================
+-- FASE 4 – CONVERSÃO OLTP → OLAP (STAR SCHEMA)
+-- ============================================================
+
+-- GRANULARIDADE DEFINIDA: 1 linha = 1 mensalidade por aluno
+-- Cada registro na tabela fato representa UMA mensalidade de UM aluno
+
+-- ------------------------------------------------------------
+-- 4.1 DIMENSÕES
+-- ------------------------------------------------------------
+
+-- Dimensão Aluno (NK = pk_aluno do OLTP)
+CREATE TABLE dim_aluno (
+    sk_aluno         INT AUTO_INCREMENT PRIMARY KEY,
+    nk_aluno         INT NOT NULL,
+    nome_aluno       VARCHAR(100) NOT NULL,
+    ra               CHAR(10) NOT NULL,
+    cpf              CHAR(11) NOT NULL,
+    data_nascimento  DATE NOT NULL,
+    data_ingresso    DATE NOT NULL,
+    faixa_etaria     VARCHAR(30) NOT NULL,
+    status_aluno     VARCHAR(40) NOT NULL
+);
+
+-- Dimensão Curso (NK = pk_curso do OLTP)
+CREATE TABLE dim_curso (
+    sk_curso           INT AUTO_INCREMENT PRIMARY KEY,
+    nk_curso           INT NOT NULL,
+    nome_curso         VARCHAR(100) NOT NULL,
+    duracao_semestres  TINYINT NOT NULL
+);
+
+-- Dimensão Tempo (gerada pelo ETL – não existe no OLTP)
+CREATE TABLE dim_tempo (
+    sk_tempo      INT NOT NULL PRIMARY KEY,
+    data_completa DATE NOT NULL,
+    ano           INT NOT NULL,
+    semestre      INT NOT NULL,
+    trimestre     INT NOT NULL,
+    mes           INT NOT NULL,
+    nome_mes      VARCHAR(30) NOT NULL,
+    dia_semana    VARCHAR(40) NOT NULL
+);
+
+-- ------------------------------------------------------------
+-- 4.2 TABELA FATO
+-- ------------------------------------------------------------
+
+CREATE TABLE fato_financeiro (
+    sk_financeiro        INT AUTO_INCREMENT PRIMARY KEY,
+    sk_aluno             INT NOT NULL,
+    sk_curso             INT NOT NULL,
+    sk_tempo_vencimento  INT NOT NULL,
+    sk_tempo_pagamento   INT NULL,
+    nk_mensalidade       INT NOT NULL,
+    valor_previsto       DECIMAL(10,2) N
